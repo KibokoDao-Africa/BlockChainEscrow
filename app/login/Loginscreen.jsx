@@ -1,11 +1,54 @@
-"use client"
+"use client";
 
 import { Shield, Mail, Lock, Github } from "lucide-react";
-import React from 'react'
-import Link from "next/link"
+import React, { useState } from "react";
+import Link from "next/link";
+import { Web3Provider } from "@ethersproject/providers";
 
+const WalletConnect = ({ onWalletConnected }) => {
+  const [walletAddress, setWalletAddress] = useState(null);
+
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        const provider = new Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+        setWalletAddress(address);
+
+        if (onWalletConnected) {
+          onWalletConnected(address);
+        }
+      } catch (err) {
+        console.error("Error connecting wallet:", err);
+      }
+    } else {
+      alert("Please install MetaMask or another wallet extension.");
+    }
+  };
+
+  const truncateAddress = (address) => {
+    return address
+      ? `${address.slice(0, 6)}...${address.slice(-4)}`
+      : "Address not available";
+  };
+
+  return (
+    <button
+      className="w-full flex items-center justify-center gap-2 border py-2 px-4 rounded-lg hover:bg-gray-50"
+      onClick={connectWallet}
+    >
+      {walletAddress ? truncateAddress(walletAddress) : "Connect Wallet"}
+    </button>
+  );
+};
 
 const Loginscreen = () => {
+  const handleWalletConnected = (address) => {
+    console.log("Wallet connected:", address);
+  };
+
   return (
     <div className="w-full min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
@@ -14,9 +57,7 @@ const Loginscreen = () => {
             <Shield className="h-12 w-12 text-blue-600" />
           </div>
           <h2 className="mt-4 text-3xl font-bold">Welcome to Escrow Guard</h2>
-          <p className="mt-2 text-gray-600">
-            Secure payments for your projects
-          </p>
+          <p className="mt-2 text-gray-600">Secure payments for your projects</p>
         </div>
         <div className="bg-white p-8 rounded-lg shadow-sm space-y-6">
           <div className="space-y-4">
@@ -47,12 +88,8 @@ const Loginscreen = () => {
               </div>
             </div>
           </div>
-          <button
-           
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-          >
+          <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
             <Link href="/project-creation">Sign In</Link>
-           
           </button>
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -68,10 +105,11 @@ const Loginscreen = () => {
             <Github className="h-5 w-5" />
             GitHub
           </button>
+          <WalletConnect onWalletConnected={handleWalletConnected} />
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Loginscreen
+export default Loginscreen;
