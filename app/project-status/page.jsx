@@ -12,61 +12,8 @@ import {
   LineChart,
   LogOut,
 } from "lucide-react";
-
-
-import Loginscreen from "../login/Loginscreen";
-
 const ProjectStatus = () => {
-  const [currentScreen, setCurrentScreen] = useState("dashboard");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  const handleAuth = () => {
-    setIsAuthenticated(true);
-    setCurrentScreen("dashboard");
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setCurrentScreen("dashboard");
-  };
-
-  if (!isAuthenticated) {
-    return <Loginscreen onSuccess={handleAuth} />;
-  }
-
-  const AppHeader = () => (
-    <header className="w-full bg-white border-b">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Shield className="h-6 w-6 text-blue-600" />
-          <h1 className="text-xl font-semibold">Escrow Guard</h1>
-        </div>
-        <nav className="flex items-center gap-6">
-          <button
-            onClick={() => setCurrentScreen("dashboard")}
-            className={`text-gray-600 hover:text-gray-900 ${currentScreen === "dashboard" && "text-blue-600 font-medium"}`}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setCurrentScreen("create")}
-            className={`text-gray-600 hover:text-gray-900 ${currentScreen === "create" && "text-blue-600 font-medium"}`}
-          >
-            New Project
-          </button>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </button>
-        </nav>
-      </div>
-    </header>
-  );
-
-  const DashboardScreen = () => (
+  return (
     <main className="max-w-7xl mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
@@ -151,7 +98,7 @@ const ProjectStatus = () => {
                     <div
                       className="bg-green-500 h-2 rounded-full"
                       style={{
-                        width: "80%"
+                        width: "80%",
                       }}
                     ></div>
                   </div>
@@ -186,7 +133,7 @@ const ProjectStatus = () => {
                     <div
                       className="bg-green-500 h-2 rounded-full"
                       style={{
-                        width: "60%"
+                        width: "60%",
                       }}
                     ></div>
                   </div>
@@ -216,7 +163,7 @@ const ProjectStatus = () => {
                 <div
                   className="bg-green-500 h-2 rounded-full"
                   style={{
-                    width: "75%"
+                    width: "75%",
                   }}
                 ></div>
               </div>
@@ -253,15 +200,7 @@ const ProjectStatus = () => {
         </div>
       </div>
     </main>
-  );
+  )
+}
 
-  return (
-    <div className="w-full min-h-screen bg-gray-50">
-      <AppHeader />
-      {currentScreen === "create" && <ProjectCreation />}
-      {currentScreen === "dashboard" && <DashboardScreen />}
-    </div>
-  );
-};
-
-export default ProjectStatus;
+export default ProjectStatus
