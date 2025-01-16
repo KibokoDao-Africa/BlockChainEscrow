@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useState } from "react";
-import { ethers } from "ethers";
+import { Web3Provider } from "@ethersproject/providers";
 
 const WalletConnect = ({ onWalletConnected }) => {
   const [walletAddress, setWalletAddress] = useState(null);
@@ -7,13 +9,12 @@ const WalletConnect = ({ onWalletConnected }) => {
   const connectWallet = async () => {
     if (window.ethereum) {
       try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const provider = new Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         const signer = provider.getSigner();
         const address = await signer.getAddress();
         setWalletAddress(address);
 
-        // Callback to parent component if provided
         if (onWalletConnected) {
           onWalletConnected(address);
         }
@@ -32,19 +33,12 @@ const WalletConnect = ({ onWalletConnected }) => {
   };
 
   return (
-    <div className="wallet-connect">
-      <button
-        className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition"
-        onClick={connectWallet}
-      >
-        {walletAddress ? truncateAddress(walletAddress) : "Connect Wallet"}
-      </button>
-      {walletAddress && (
-        <p className="mt-2 text-sm text-gray-600">
-          Connected Address: {truncateAddress(walletAddress)}
-        </p>
-      )}
-    </div>
+    <button
+      className="w-full flex items-center justify-center gap-2 border py-2 px-4 rounded-lg hover:bg-gray-50"
+      onClick={connectWallet}
+    >
+      {walletAddress ? truncateAddress(walletAddress) : "Connect Wallet"}
+    </button>
   );
 };
 
