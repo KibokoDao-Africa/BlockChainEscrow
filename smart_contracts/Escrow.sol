@@ -22,8 +22,9 @@ contract Escrow {
         uint256 amount;        // Amount allocated to the milestone.
         bool isCompleted;      // Status of completion.
         bool isApproved;       // Status of approval by the project owner.
+        bool isPassed;  
+        bool isFailed;       // status for passed or failed test result from github oracle 
     }
-
     // Struct to represent a project with multiple milestones.
     struct Project {
         address owner;         // Address of the project owner.
@@ -93,11 +94,15 @@ contract Escrow {
 
         // Initialize milestones for the project.
         for (uint256 i = 0; i < milestoneAmounts.length; i++) {
-            project.milestones.push(Milestone(milestoneAmounts[i], false, false));
+            project.milestones.push(Milestone(milestoneAmounts[i], false, false, false, false));
         }
 
         // Emit an event for project creation.
         emit ProjectCreated(projectCount, msg.sender, developer);
+    }
+
+     function compareStrings(string memory a, string memory b) internal returns (bool) {
+        return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
 
     /**
@@ -105,22 +110,24 @@ contract Escrow {
      * @param projectId ID of the project.
      * @param milestoneId ID of the milestone to verify.
      */
-    function verifyMilestone(uint256 projectId, uint256 milestoneId) external {
+      function verifyMilestone(uint256 projectId, uint256 milestoneId) external {
         require(projects[projectId].isActive, "Project is not active");
 
         // Retrieve test results from GitHubOracle.
-        string memory testResult = gitHubOracle.getTestResult(projectId);
-        // Add logic to interpret testResult and update milestone status.
-
+        string memory result = gitHubOracle.getTestResult(projectId);
+            
         Milestone storage milestone = projects[projectId].milestones[milestoneId];
         require(!milestone.isCompleted, "Milestone already completed");
+            
+        if (compareStrings(result, "passed")) {
+            // Mark a milestone as passed.
+            milestone.isPassed = true;
+        } else { 
+            milestone.isFailed=  true;  
+        }
 
-        // Mark the milestone as completed.
-        milestone.isCompleted = true;
-
-        // Emit an event for milestone update.
-        emit MilestoneUpdated(projectId, milestoneId, true);
-    }
+        emit MilestoneUpdated(projectId, milestoneId, false);
+        }
 
     /**
      * @dev Approves a completed milestone and releases funds to the developer.
