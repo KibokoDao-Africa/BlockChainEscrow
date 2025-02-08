@@ -17,7 +17,7 @@ const Loginscreen = () => {
           <div className="flex justify-center">
             <Shield className="h-12 w-12 text-blue-600" />
           </div>
-          <h2 className="mt-4 text-3xl font-bold">Welcome to Escrow Guard</h2>
+          <h2 className="mt-4 text-3xl font-bold">Welcome to Zugo</h2>
           <p className="mt-2 text-gray-600">Secure payments for your projects</p>
         </div>
         <div className="bg-white p-8 rounded-lg shadow-sm space-y-6">
