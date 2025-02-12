@@ -1,10 +1,5 @@
-"use client"
-
+"use client";
 import React, { useState } from "react";
-
-
-import { Code, Plus, X, Calendar, CheckCircle } from "lucide-react";
-import Link from "next/link";
 
 const frameworks = [
   {
@@ -40,7 +35,15 @@ const ProjectCreation = () => {
       testCases: [],
     },
   ]);
+  const [projectName, setProjectName] = useState("");
+  const [projectBudget, setProjectBudget] = useState("");
+  const [projectDescription, setProjectDescription] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [hasIssues, setHasIssues] = useState(false);
+  const [hasProjects, setHasProjects] = useState(true);
+  const [hasWiki, setHasWiki] = useState(false);
 
+  // Function to add a milestone
   const addMilestone = () => {
     setMilestones([
       ...milestones,
@@ -53,249 +56,259 @@ const ProjectCreation = () => {
     ]);
   };
 
+  // Function to remove a milestone
   const removeMilestone = (index) => {
     setMilestones(milestones.filter((_, i) => i !== index));
   };
 
-  const addTestCase = (milestoneIndex) => {
+  // Function to handle file upload for test cases
+  const handleFileUpload = (milestoneIndex, files) => {
     const newMilestones = [...milestones];
-    newMilestones[milestoneIndex].testCases.push({
-      description: "",
-      type: frameworks.find((f) => f.id === selectedFramework)?.testTypes[0] || "",
-    });
+    newMilestones[milestoneIndex].testCases = Array.from(files).map((file) => ({
+      name: file.name,
+      type: file.type,
+      size: file.size,
+    }));
     setMilestones(newMilestones);
   };
 
-  const removeTestCase = (milestoneIndex, testCaseIndex) => {
-    const newMilestones = [...milestones];
-    newMilestones[milestoneIndex].testCases.splice(testCaseIndex, 1);
-    setMilestones(newMilestones);
-  };
+  // Function to create the project
+  const createProject = async () => {
+    try {
+      if (!projectName || !projectBudget || !projectDescription || !selectedFramework) {
+        alert("Please fill in all required fields.");
+        return;
+      }
 
-  const updateTestCase = (milestoneIndex, testCaseIndex, field, value) => {
-    const newMilestones = [...milestones];
-    newMilestones[milestoneIndex].testCases[testCaseIndex][field] = value;
-    setMilestones(newMilestones);
+      const payload = {
+        framework: frameworks.find((f) => f.id === selectedFramework).name,
+        name: projectName,
+        amount: projectBudget,
+        description: projectDescription,
+        private: isPrivate,
+        has_issues: hasIssues,
+        has_projects: hasProjects,
+        has_wiki: hasWiki,
+        owner: 1, // Assuming owner ID is fixed for now
+        milestones: milestones.map((milestone) => ({
+          title: milestone.title,
+          description: milestone.description,
+          dueDate: milestone.dueDate,
+          testCases: milestone.testCases,
+        })),
+      };
+
+      // Retrieve access token from localStorage
+      const accessToken = localStorage.getItem("access_token");
+      if (!accessToken) {
+        alert("Access token not found. Please log in.");
+        return;
+      }
+
+      const response = await fetch(
+        "https://blockchainescrow-production-ed33.up.railway.app/testcases/create-repo/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`, // Add token to headers
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (response.ok) {
+        alert("Project created successfully!");
+      } else {
+        alert("Failed to create project. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error creating project:", error);
+      alert("An error occurred while creating the project.");
+    }
   };
 
   return (
-    <div className="w-full min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold">Create New Project</h1>
-          <p className="text-gray-600 mt-2">
-            Set up your project details, milestones, and test cases
-          </p>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Project Name
-              </label>
-              <input
-                type="text"
-                className="mt-1 w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="My Awesome Project"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Project Budget (USDC)
-              </label>
-              <input
-                type="number"
-                className="mt-1 w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="5000"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Testing Framework
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {frameworks.map((framework) => (
-                  <div
-                    key={framework.id}
-                    onClick={() => setSelectedFramework(framework.id)}
-                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                      selectedFramework === framework.id
-                        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                        : "hover:border-blue-500 hover:bg-blue-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{framework.icon}</span>
-                      <div className="flex-1">
-                        <h3 className="font-medium">{framework.name}</h3>
-                        <p className="text-sm text-gray-600">
-                          {framework.description}
-                        </p>
-                      </div>
-                      {selectedFramework === framework.id && (
-                        <CheckCircle className="h-5 w-5 text-blue-500" />
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Project Milestones</h2>
-            <button
-              onClick={addMilestone}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
-            >
-              <Plus className="h-4 w-4" />
-              Add Milestone
-            </button>
-          </div>
-          <div className="space-y-6">
-            {milestones.map((milestone, milestoneIndex) => (
-              <div
-                key={milestoneIndex}
-                className="border rounded-lg p-4 relative"
-              >
-                <button
-                  onClick={() => removeMilestone(milestoneIndex)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Milestone Title
-                      </label>
-                      <input
-                        type="text"
-                        className="mt-1 w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="e.g., Backend API Implementation"
-                        value={milestone.title}
-                        onChange={(e) => {
-                          const newMilestones = [...milestones];
-                          newMilestones[milestoneIndex].title = e.target.value;
-                          setMilestones(newMilestones);
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Due Date
-                      </label>
-                      <div className="mt-1 relative">
-                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <input
-                          type="date"
-                          className="pl-10 w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          value={milestone.dueDate}
-                          onChange={(e) => {
-                            const newMilestones = [...milestones];
-                            newMilestones[milestoneIndex].dueDate = e.target.value;
-                            setMilestones(newMilestones);
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Description
-                    </label>
-                    <textarea
-                      className="mt-1 w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows={3}
-                      placeholder="Describe the milestone and its requirements..."
-                      value={milestone.description}
-                      onChange={(e) => {
-                        const newMilestones = [...milestones];
-                        newMilestones[milestoneIndex].description = e.target.value;
-                        setMilestones(newMilestones);
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Test Cases
-                      </label>
-                      <button
-                        onClick={() => addTestCase(milestoneIndex)}
-                        className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add Test Case
-                      </button>
-                    </div>
-                    <div className="space-y-3">
-                      {milestone.testCases.map((testCase, testCaseIndex) => (
-                        <div
-                          key={testCaseIndex}
-                          className="flex items-center gap-2"
-                        >
-                          <Code className="h-4 w-4 text-gray-400" />
-                          <select
-                            className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            value={testCase.type}
-                            onChange={(e) =>
-                              updateTestCase(
-                                milestoneIndex,
-                                testCaseIndex,
-                                "type",
-                                e.target.value
-                              )
-                            }
-                          >
-                            {selectedFramework &&
-                              frameworks
-                                .find((f) => f.id === selectedFramework)
-                                ?.testTypes.map((type) => (
-                                  <option key={type} value={type}>
-                                    {type}
-                                  </option>
-                                ))}
-                          </select>
-                          <input
-                            type="text"
-                            className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Test case description"
-                            value={testCase.description}
-                            onChange={(e) =>
-                              updateTestCase(
-                                milestoneIndex,
-                                testCaseIndex,
-                                "description",
-                                e.target.value
-                              )
-                            }
-                          />
-                          <button
-                            onClick={() =>
-                              removeTestCase(milestoneIndex, testCaseIndex)
-                            }
-                            className="text-gray-400 hover:text-gray-600"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
-            <Link href="/project-status">Create Project</Link>
-          </button>
-        </div>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold text-center mb-4">Create New Project</h1>
+      <p className="text-gray-600 text-center mb-8">
+        Set up your project details, milestones, and test cases
+      </p>
+
+      {/* Project Details */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Project Name:</label>
+        <input
+          type="text"
+          value={projectName}
+          onChange={(e) => setProjectName(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        />
       </div>
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Project Budget (USDC):</label>
+        <input
+          type="number"
+          value={projectBudget}
+          onChange={(e) => setProjectBudget(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Project Description:</label>
+        <textarea
+          value={projectDescription}
+          onChange={(e) => setProjectDescription(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+      <div className="flex items-center space-x-4 mb-6">
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={isPrivate}
+            onChange={() => setIsPrivate(!isPrivate)}
+            className="form-checkbox h-5 w-5 text-blue-600"
+          />
+          <span>Is Private</span>
+        </label>
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={hasIssues}
+            onChange={() => setHasIssues(!hasIssues)}
+            className="form-checkbox h-5 w-5 text-blue-600"
+          />
+          <span>Has Issues</span>
+        </label>
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={hasProjects}
+            onChange={() => setHasProjects(!hasProjects)}
+            className="form-checkbox h-5 w-5 text-blue-600"
+          />
+          <span>Has Projects</span>
+        </label>
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={hasWiki}
+            onChange={() => setHasWiki(!hasWiki)}
+            className="form-checkbox h-5 w-5 text-blue-600"
+          />
+          <span>Has Wiki</span>
+        </label>
+      </div>
+
+      {/* Testing Framework Selection */}
+      <div className="mb-6">
+        <h2 className="text-lg font-medium mb-2">Testing Framework</h2>
+        {frameworks.map((framework) => (
+          <div
+            key={framework.id}
+            onClick={() => setSelectedFramework(framework.id)}
+            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+              selectedFramework === framework.id
+                ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                : "hover:border-blue-500 hover:bg-blue-50"
+            }`}
+          >
+            <span>{framework.icon}</span>
+            <span className="ml-2">{framework.name}</span>
+            <span className="block mt-1 text-gray-600">{framework.description}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Milestones Section */}
+      <div>
+        <h2 className="text-lg font-medium mb-2">Project Milestones</h2>
+        <button
+          onClick={addMilestone}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md mb-4 hover:bg-blue-600"
+        >
+          Add Milestone
+        </button>
+        {milestones.map((milestone, milestoneIndex) => (
+          <div key={milestoneIndex} className="mb-6 relative">
+            <button
+              onClick={() => removeMilestone(milestoneIndex)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+            >
+              Remove Milestone
+            </button>
+            <input
+              type="text"
+              placeholder="Milestone Title"
+              value={milestone.title}
+              onChange={(e) => {
+                const newMilestones = [...milestones];
+                newMilestones[milestoneIndex].title = e.target.value;
+                setMilestones(newMilestones);
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-2"
+            />
+            <input
+              type="date"
+              value={milestone.dueDate}
+              onChange={(e) => {
+                const newMilestones = [...milestones];
+                newMilestones[milestoneIndex].dueDate = e.target.value;
+                setMilestones(newMilestones);
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-2"
+            />
+            <textarea
+              value={milestone.description}
+              onChange={(e) => {
+                const newMilestones = [...milestones];
+                newMilestones[milestoneIndex].description = e.target.value;
+                setMilestones(newMilestones);
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-2"
+            />
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <h3 className="text-lg font-medium mb-2">Upload Test Cases</h3>
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleFileUpload(milestoneIndex, e.dataTransfer.files);
+                }}
+                className="border-dashed border-2 border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500"
+              >
+                <p className="text-gray-600">Drag and drop files here or click to browse</p>
+                <input
+                  type="file"
+                  multiple
+                  onChange={(e) => handleFileUpload(milestoneIndex, e.target.files)}
+                  className="hidden"
+                />
+              </div>
+              {milestone.testCases.length > 0 && (
+                <ul className="mt-4 list-disc list-inside">
+                  {milestone.testCases.map((testCase, index) => (
+                    <li key={index} className="text-sm text-gray-700">
+                      {testCase.name} ({testCase.type}, {Math.round(testCase.size / 1024)} KB)
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Create Project Button */}
+      <button
+        onClick={createProject}
+        className="w-full bg-green-500 text-white px-4 py-3 rounded-md hover:bg-green-600"
+      >
+        Create Project
+      </button>
     </div>
   );
-}
+};
 
-export default ProjectCreation
+export default ProjectCreation;
