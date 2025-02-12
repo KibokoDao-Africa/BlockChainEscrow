@@ -119,6 +119,7 @@ const ProjectCreation = () => {
 
       if (response.ok) {
         alert("Project created successfully!");
+        window.location.href = "/projects";
       } else {
         alert("Failed to create project. Please try again.");
       }
